@@ -1,20 +1,16 @@
-/*
-client/src/App.js: This is the main React component that manages the application's
-state and renders different components based on the current page. It also establishes
-a connection with the server using Socket.IO and handles various socket events.
-*/
-
 import React, { useState, useEffect } from "react";
 import { io } from "socket.io-client";
 import HostGame from "./components/HostGame";
 import JoinGame from "./components/JoinGame";
-
-const socket = io("http://localhost:3001");
+import socket from "./socket";
+import Waiting from "./components/Waiting";
+import Game from "../server/game";
 
 function App() {
   const [page, setPage] = useState("welcome");
   const [gameCode, setGameCode] = useState(null);
   const [playerName, setPlayerName] = useState("");
+  const [isGameStarted, setIsGameStarted] = useState(false);
 
   useEffect(() => {
     socket.on("connect", () => {
@@ -31,7 +27,6 @@ function App() {
     };
   }, []);
 
-
   useEffect(() => {
     socket.on("gameCreated", ({ gameCode }) => {
       console.log("[client] gameCreated event received");
@@ -39,8 +34,13 @@ function App() {
       setGameCode(gameCode);
     });
 
+    socket.on("gameStarted", () => {
+      setIsGameStarted(true);
+    });
+
     return () => {
       socket.off("gameCreated");
+      socket.off("gameStarted");
     };
   }, []);
 
@@ -57,18 +57,21 @@ function App() {
       alert("Please enter your name before hosting a game.");
     } else {
       console.log("Emitting createGame event");
-      const newSocket = io("http://localhost:3001");
-      newSocket.emit("createGame", { playerName });
-      newSocket.on("gameCreated", ({ gameCode }) => {
-        console.log("Received game code:", gameCode);
-        setGameCode(gameCode);
-      });
+      socket.emit("createGame", { playerName });
       setPage("host");
     }
   };
 
   const handlePlayerNameChange = (event) => {
     setPlayerName(event.target.value);
+  };
+
+  const handleGameJoined = () => {
+    setPage("waiting");
+  };
+
+  const handleStartGame = (gameCode) => {
+    socket.emit("startGame", gameCode);
   };
 
   return (
@@ -84,8 +87,17 @@ function App() {
           <button onClick={handleJoinGame}>Join Game</button>
         </>
       )}
-      {page === "host" && <HostGame gameCode={gameCode} onBack={handleBack} />}
-      {page === "join" && <JoinGame socket={socket} onBack={handleBack} />}
+      {page === "host" && (
+        <HostGame
+          gameCode={gameCode}
+          onBack={handleBack}
+          socket={socket}
+          onStartGame={handleStartGame}
+        />
+      )}
+      {page === "join" && <JoinGame socket={socket} onBack={handleBack} onGameJoined={handleGameJoined} />}
+      {page === "waiting" && !isGameStarted && <Waiting />}
+      {page === "waiting" && isGameStarted && <Game />}
     </div>
   );
 }

@@ -1,28 +1,35 @@
-/*
-client/src/components/JoinGame.js: This component allows players to join an 
-existing game by entering a game code. It manages the game code state, and 
-when the "Join" button is clicked, it should emit a "joinGame" event to the 
-server with the player's name and game code. It also receives a "Back" button 
-handler as props from the App component.
-*/
+import React, { useState, useEffect } from "react";
 
-import React, { useState } from "react";
-
-const JoinGame = ({ socket, onBack }) => {
+const JoinGame = ({ socket, onBack, onGameJoined }) => {
     const [gameCode, setGameCode] = useState("");
     const [playerName, setPlayerName] = useState("");
 
-    const handleGameCodeChange = (event) => {
-        setGameCode(event.target.value);
+    useEffect(() => {
+        socket.on("gameJoined", (data) => {
+            onGameJoined(data);
+        });
+
+        socket.on("error", (error) => {
+            alert(error.message);
+        });
+
+        return () => {
+            socket.off("gameJoined");
+            socket.off("error");
+        };
+    }, [socket, onGameJoined]);
+
+    const handleGameCodeChange = (e) => {
+        setGameCode(e.target.value);
     };
 
-    const handlePlayerNameChange = (event) => {
-        setPlayerName(event.target.value);
+    const handlePlayerNameChange = (e) => {
+        setPlayerName(e.target.value);
     };
 
-    const joinGame = () => {
-        if (playerName.trim() === "") {
-            alert("Please enter your name before joining a game.");
+    const handleJoinGame = () => {
+        if (playerName.trim() === "" || gameCode.trim() === "") {
+            alert("Please enter your name and a valid game code before joining.");
         } else {
             socket.emit("joinGame", { playerName, gameCode });
         }
@@ -39,7 +46,7 @@ const JoinGame = ({ socket, onBack }) => {
                 Enter game code:
                 <input type="text" value={gameCode} onChange={handleGameCodeChange} />
             </label>
-            <button onClick={joinGame}>Join</button>
+            <button onClick={handleJoinGame}>Join Game</button>
             <button onClick={onBack}>Back</button>
         </div>
     );

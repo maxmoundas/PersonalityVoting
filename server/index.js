@@ -9,15 +9,40 @@ const cors = require("cors");
 const app = express();
 
 // Enable CORS for all routes
-app.use(cors());
-/*
 app.use(cors({
-    origin: "http://localhost:3000",
+    origin: function (origin, callback) {
+        // Allow any origin that matches the localhost pattern
+        const localhostPattern = /^http:\/\/localhost:\d+$/;
+        if (!origin || localhostPattern.test(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     methods: ["GET", "POST"],
     allowedHeaders: ["*"],
     credentials: true
 }));
-*/
+
+const server = http.createServer(app);
+const io = require("socket.io")(server, {
+    cors: {
+        origin: function (origin, callback) {
+            // Allow any origin that matches the localhost pattern
+            const localhostPattern = /^http:\/\/localhost:\d+$/;
+            if (!origin || localhostPattern.test(origin)) {
+                callback(null, true);
+            } else {
+                callback(new Error('Not allowed by CORS'));
+            }
+        },
+        methods: ["GET", "POST"],
+        allowedHeaders: ["*"],
+        credentials: true
+    }
+});
+/*
+app.use(cors());
 
 const server = http.createServer(app);
 const io = require("socket.io")(server, {
@@ -28,6 +53,7 @@ const io = require("socket.io")(server, {
         credentials: true
     }
 });
+*/
 
 const { games } = require("./utils");
 

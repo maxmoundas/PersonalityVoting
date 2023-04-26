@@ -1,17 +1,38 @@
-/*
-client/src/components/HostGame.js: This component displays the game code for the 
-host player to share with other players. It receives the game code and a "Back" 
-button handler as props from the App component.
-*/
+import React, { useState, useEffect } from "react";
 
-import React from "react";
+const HostGame = ({ gameCode, onBack, socket, onStartGame }) => {
+    const [players, setPlayers] = useState([]);
 
-const HostGame = ({ gameCode, onBack }) => {
+    useEffect(() => {
+        const handlePlayerJoined = ({ playerId, playerName }) => {
+            setPlayers((prevPlayers) => [...prevPlayers, { id: playerId, name: playerName }]);
+        };
+
+        socket.on("playerJoined", handlePlayerJoined);
+
+        return () => {
+            socket.off("playerJoined", handlePlayerJoined);
+        };
+    }, [socket]);
+
+    const handleStartGame = () => {
+        onStartGame(gameCode);
+    };
+
     return (
         <div>
             <h2>Host Game</h2>
             <p>Share this code with your friends to join the game: {gameCode}</p>
             <button onClick={onBack}>Back</button>
+            <div>
+                <h3>Players in the game:</h3>
+                <ul>
+                    {players.map((player) => (
+                        <li key={player.id}>{player.name}</li>
+                    ))}
+                </ul>
+            </div>
+            <button onClick={handleStartGame}>Start Game</button>
         </div>
     );
 };
