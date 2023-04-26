@@ -9,29 +9,45 @@ const cors = require("cors");
 const app = express();
 
 // Enable CORS for all routes
+app.use(cors());
+/*
 app.use(cors({
-    origin: "http://localhost:3000", // Set the origin to your client's address
+    origin: "http://localhost:3000",
     methods: ["GET", "POST"],
     allowedHeaders: ["*"],
     credentials: true
 }));
+*/
 
 const server = http.createServer(app);
 const io = require("socket.io")(server, {
     cors: {
-        origin: "http://localhost:3000", // Set the origin to your client's address
+        origin: "http://localhost:3000",
         methods: ["GET", "POST"],
         allowedHeaders: ["*"],
         credentials: true
     }
 });
 
-// ... (Socket.IO connection and event handling code) ...
 const { games } = require("./utils");
 
 io.on("connection", (socket) => {
     console.log("Client connected:", socket.id);
-    console.log("New client connected");
+
+    // Disconnecting event handler
+    socket.on("disconnecting", () => {
+        console.log("Client disconnecting:", socket.id);
+        const game = getGameByPlayerId(socket.id);
+
+        if (game) {
+            game.removePlayer(socket.id);
+        }
+    });
+
+    // Disconnect event handler
+    socket.on("disconnect", (reason) => {
+        console.log("Client disconnected:", socket.id, "Reason:", reason);
+    });
 
     // Create a new game and join as the host
     socket.on("createGame", ({ playerName }) => {
@@ -49,9 +65,6 @@ io.on("connection", (socket) => {
 
         // After emitting the "gameCreated" event
         console.log("[server] gameCreated event emitted to host");
-
-        // Add the following line to set the Access-Control-Allow-Origin header
-        socket.io.engine.httpServer._events.request.headers['Access-Control-Allow-Origin'] = 'http://localhost:3000';
     });
 
     // Join an existing game
@@ -97,10 +110,6 @@ io.on("connection", (socket) => {
                 }
             }
         }
-    });
-
-    socket.on("disconnect", (reason) => {
-        console.log("Client disconnected:", socket.id, "Reason:", reason);
     });
 });
 

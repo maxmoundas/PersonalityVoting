@@ -16,13 +16,17 @@ class Game {
     constructor(hostId, code) {
         this.hostId = hostId;
         this.code = code;
-        this.players = {};
+        this.players = [];
         this.currentRound = 0;
         this.currentTrait = "";
     }
 
     addPlayer(playerId, playerName) {
         this.players[playerId] = new Player(playerId, playerName);
+    }
+
+    removePlayer(playerId) {
+        this.players = this.players.filter(player => player.id !== playerId);
     }
 
     startRound(traitGenerator) {
