@@ -1,0 +1,27 @@
+{
+  "name": "personalityvoting",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maxmoundas/PersonalityVoting.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/maxmoundas/PersonalityVoting/issues"
+  },
+  "homepage": "https://github.com/maxmoundas/PersonalityVoting#readme",
+  "dependencies": {
+    "express": "^4.18.2",
+    "react-redux": "^8.0.5",
+    "react-scripts": "^5.0.1",
+    "redux": "^4.2.1",
+    "socket.io": "^4.6.1"
+  }
+}
