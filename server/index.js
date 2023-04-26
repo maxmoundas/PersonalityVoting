@@ -5,26 +5,39 @@ const { Game, Player } = require("./game");
 const { generateGameCode, getGameByPlayerId } = require("./utils");
 
 const app = express();
+
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = require("socket.io")(server, {
+    cors: {
+        origin: "http://localhost:3001", // Set the origin to your client's address
+        methods: ["GET", "POST"],
+        allowedHeaders: ["*"],
+        credentials: true
+    }
+});
 
 // ... (Socket.IO connection and event handling code) ...
 const { games } = require("./utils");
 
 io.on("connection", (socket) => {
+    console.log("Client connected:", socket.id);
     console.log("New client connected");
 
     // Create a new game and join as the host
     socket.on("createGame", ({ playerName }) => {
+        console.log("createGame event received");
         const gameCode = generateGameCode();
+        console.log("Generated game code:", gameCode); // for debugging
         const game = new Game(socket.id, gameCode);
         game.addPlayer(socket.id, playerName);
 
         games[gameCode] = game;
         socket.join(gameCode);
 
+        // Emit the game code to the host player
         io.to(socket.id).emit("gameCreated", { gameCode });
     });
+
 
     // Join an existing game
     socket.on("joinGame", ({ playerName, gameCode }) => {

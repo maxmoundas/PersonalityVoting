@@ -13,4 +13,27 @@ export const setGameState = (gameState) => ({
     payload: { gameState },
 });
 
-// ... Add other game-related action creators
+export const startGame = (traitGenerator) => ({
+    type: "START_GAME",
+    payload: { traitGenerator },
+});
+
+export const submitVote = (votedPlayerId) => ({
+    type: "SUBMIT_VOTE",
+    payload: { votedPlayerId },
+});
+
+export const gameEnded = (players) => ({
+    type: "GAME_ENDED",
+    payload: { players },
+});
+
+export const playerJoined = (playerId, playerName) => ({
+    type: "PLAYER_JOINED",
+    payload: { playerId, playerName },
+});
+
+export const roundStarted = (round, trait) => ({
+    type: "ROUND_STARTED",
+    payload: { round, trait },
+});
