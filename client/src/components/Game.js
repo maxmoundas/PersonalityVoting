@@ -1,15 +1,15 @@
-/*
-server/game.js: This file contains the Game and Player classes, which model 
-the game state and player state, respectively. These classes handle game 
-logic such as adding players, starting rounds, and voting.
-*/
-
 class Player {
     constructor(id, name) {
         this.id = id;
         this.name = name;
         this.votes = 0;
     }
+}
+
+function traitGenerator() {
+    const traits = ["Trait1", "Trait2", "Trait3", "Trait4", "Trait5"];
+    const randomIndex = Math.floor(Math.random() * traits.length);
+    return traits[randomIndex];
 }
 
 class Game {
@@ -21,6 +21,10 @@ class Game {
         this.currentTrait = "";
     }
 
+    playersArray() {
+        return Object.values(this.players);
+    }
+
     addPlayer(playerId, playerName) {
         this.players[playerId] = new Player(playerId, playerName);
     }
@@ -29,10 +33,11 @@ class Game {
         this.players = this.players.filter(player => player.id !== playerId);
     }
 
-    startRound(traitGenerator) {
+    startRound() {
         this.currentRound += 1;
         this.currentTrait = traitGenerator();
         this.resetPlayerVotes();
+        return { trait: this.currentTrait, players: Object.values(this.players) };
     }
 
     resetPlayerVotes() {

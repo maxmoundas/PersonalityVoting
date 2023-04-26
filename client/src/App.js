@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { io } from "socket.io-client";
 import HostGame from "./components/HostGame";
 import JoinGame from "./components/JoinGame";
 import socket from "./socket";
 import Waiting from "./components/Waiting";
-import Game from "../server/game";
+import Game from "./components/Game";
+import GameRound from "./components/GameRound";
 
 function App() {
   const [page, setPage] = useState("welcome");
   const [gameCode, setGameCode] = useState(null);
   const [playerName, setPlayerName] = useState("");
   const [isGameStarted, setIsGameStarted] = useState(false);
+  const [currentTrait, setCurrentTrait] = useState("");
+  const [players, setPlayers] = useState([]);
 
   useEffect(() => {
     socket.on("connect", () => {
@@ -34,13 +36,15 @@ function App() {
       setGameCode(gameCode);
     });
 
-    socket.on("gameStarted", () => {
-      setIsGameStarted(true);
+    socket.on("startRound", ({ trait, players }) => {
+      setCurrentTrait(trait);
+      setPlayers(players);
+      setPage("gameRound");
     });
 
     return () => {
       socket.off("gameCreated");
-      socket.off("gameStarted");
+      socket.off("startRound");
     };
   }, []);
 
@@ -74,6 +78,10 @@ function App() {
     socket.emit("startGame", gameCode);
   };
 
+  const handleVote = (votedPlayerId) => {
+    // TODO: Implement voting logic
+  };
+
   return (
     <div className="App">
       {page === "welcome" && (
@@ -96,8 +104,8 @@ function App() {
         />
       )}
       {page === "join" && <JoinGame socket={socket} onBack={handleBack} onGameJoined={handleGameJoined} />}
-      {page === "waiting" && !isGameStarted && <Waiting />}
-      {page === "waiting" && isGameStarted && <Game />}
+      {page === "waiting" && <Waiting />}
+      {page === "gameRound" && <GameRound trait={currentTrait} players={players} onVote={handleVote} />}
     </div>
   );
 }

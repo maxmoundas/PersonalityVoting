@@ -1,7 +1,7 @@
 const http = require("http");
 const socketIo = require("socket.io");
-const { Game, Player } = require("./game");
-const { generateGameCode, getGameByPlayerId } = require("./utils");
+const { Game, Player } = require("../client/src/components/Game");
+const { generateGameCode, getGameByPlayerId, traitGenerator } = require("./utils");
 
 const express = require("express");
 const cors = require("cors");
@@ -41,19 +41,6 @@ const io = require("socket.io")(server, {
         credentials: true
     }
 });
-/*
-app.use(cors());
-
-const server = http.createServer(app);
-const io = require("socket.io")(server, {
-    cors: {
-        origin: "http://localhost:3000",
-        methods: ["GET", "POST"],
-        allowedHeaders: ["*"],
-        credentials: true
-    }
-});
-*/
 
 const { games } = require("./utils");
 
@@ -113,11 +100,16 @@ io.on("connection", (socket) => {
     });
 
     // Start the game
-    socket.on("startGame", (traitGenerator) => {
+    socket.on("startGame", () => {
         const game = getGameByPlayerId(socket.id);
         if (game) {
             game.startRound(traitGenerator);
-            io.to(game.code).emit("roundStarted", { round: game.currentRound, trait: game.currentTrait });
+            const players = game.playersArray().map(player => ({
+                id: player.id,
+                name: player.name,
+                score: player.score
+            }));
+            io.to(game.code).emit("startRound", { trait: game.currentTrait, players });
         }
     });
 
@@ -129,8 +121,13 @@ io.on("connection", (socket) => {
 
             if (game.allPlayersVoted()) {
                 if (!game.isGameOver()) {
-                    game.startRound(); // Add a traitGenerator function here
-                    io.to(game.code).emit("roundStarted", { round: game.currentRound, trait: game.currentTrait });
+                    game.startRound(traitGenerator);
+                    const players = game.playersArray().map(player => ({
+                        id: player.id,
+                        name: player.name,
+                        score: player.score
+                    }));
+                    io.to(game.code).emit("startRound", { trait: game.currentTrait, players });
                 } else {
                     io.to(game.code).emit("gameEnded", { players: game.players });
                 }
