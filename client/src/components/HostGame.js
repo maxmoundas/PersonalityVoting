@@ -1,3 +1,9 @@
+/*
+client/src/components/HostGame.js: This component displays the game code for the 
+host player to share with other players. It receives the game code and a "Back" 
+button handler as props from the App component.
+*/
+
 import React from "react";
 
 const HostGame = ({ gameCode, onBack }) => {

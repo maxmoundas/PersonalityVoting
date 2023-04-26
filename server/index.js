@@ -1,15 +1,25 @@
-const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
 const { Game, Player } = require("./game");
 const { generateGameCode, getGameByPlayerId } = require("./utils");
 
+const express = require("express");
+const cors = require("cors");
+
 const app = express();
+
+// Enable CORS for all routes
+app.use(cors({
+    origin: "http://localhost:3000", // Set the origin to your client's address
+    methods: ["GET", "POST"],
+    allowedHeaders: ["*"],
+    credentials: true
+}));
 
 const server = http.createServer(app);
 const io = require("socket.io")(server, {
     cors: {
-        origin: "http://localhost:3001", // Set the origin to your client's address
+        origin: "http://localhost:3000", // Set the origin to your client's address
         methods: ["GET", "POST"],
         allowedHeaders: ["*"],
         credentials: true
@@ -36,11 +46,17 @@ io.on("connection", (socket) => {
 
         // Emit the game code to the host player
         io.to(socket.id).emit("gameCreated", { gameCode });
-    });
 
+        // After emitting the "gameCreated" event
+        console.log("[server] gameCreated event emitted to host");
+
+        // Add the following line to set the Access-Control-Allow-Origin header
+        socket.io.engine.httpServer._events.request.headers['Access-Control-Allow-Origin'] = 'http://localhost:3000';
+    });
 
     // Join an existing game
     socket.on("joinGame", ({ playerName, gameCode }) => {
+        console.log("[server] joinGame event received");
         const game = games[gameCode];
 
         if (game) {
@@ -52,6 +68,9 @@ io.on("connection", (socket) => {
         } else {
             io.to(socket.id).emit("error", { message: "Game not found" });
         }
+
+        // After emitting the "gameJoined" event
+        console.log("[server] gameJoined event emitted to joining player");
     });
 
     // Start the game
@@ -80,13 +99,13 @@ io.on("connection", (socket) => {
         }
     });
 
-    socket.on("disconnect", () => {
-        console.log("Client disconnected");
+    socket.on("disconnect", (reason) => {
+        console.log("Client disconnected:", socket.id, "Reason:", reason);
     });
 });
-
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+

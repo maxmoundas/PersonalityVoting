@@ -1,3 +1,9 @@
+/*
+client/src/App.js: This is the main React component that manages the application's
+state and renders different components based on the current page. It also establishes
+a connection with the server using Socket.IO and handles various socket events.
+*/
+
 import React, { useState, useEffect } from "react";
 import { io } from "socket.io-client";
 import HostGame from "./components/HostGame";
@@ -15,14 +21,21 @@ function App() {
       console.log("Connected to server");
     });
 
+    socket.on("disconnect", (reason) => {
+      console.log("Disconnected from server:", reason);
+    });
+
     return () => {
       socket.off("connect");
+      socket.off("disconnect");
     };
   }, []);
 
+
   useEffect(() => {
     socket.on("gameCreated", ({ gameCode }) => {
-      console.log("Received game code:", gameCode); // for debugging
+      console.log("[client] gameCreated event received");
+      console.log("[client] Received game code:", gameCode);
       setGameCode(gameCode);
     });
 
@@ -44,7 +57,12 @@ function App() {
       alert("Please enter your name before hosting a game.");
     } else {
       console.log("Emitting createGame event");
-      socket.emit("createGame", { playerName });
+      const newSocket = io("http://localhost:3001");
+      newSocket.emit("createGame", { playerName });
+      newSocket.on("gameCreated", ({ gameCode }) => {
+        console.log("Received game code:", gameCode);
+        setGameCode(gameCode);
+      });
       setPage("host");
     }
   };

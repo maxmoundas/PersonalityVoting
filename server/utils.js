@@ -1,3 +1,9 @@
+/*
+server/utils.js: This file contains utility functions such as generateGameCode 
+to generate unique game codes and getGameByPlayerId to find a game by a player's 
+ID. It also maintains the games object, which stores active games in the server memory.
+*/
+
 const games = {};
 
 function generateGameCode() {

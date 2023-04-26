@@ -1,3 +1,11 @@
+/*
+client/src/components/JoinGame.js: This component allows players to join an 
+existing game by entering a game code. It manages the game code state, and 
+when the "Join" button is clicked, it should emit a "joinGame" event to the 
+server with the player's name and game code. It also receives a "Back" button 
+handler as props from the App component.
+*/
+
 import React, { useState } from "react";
 
 const JoinGame = ({ socket, onBack }) => {

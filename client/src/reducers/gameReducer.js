@@ -1,3 +1,8 @@
+/*
+client/src/reducers/gameReducer.js: This file contains the Redux reducer function 
+that updates the game state in the Redux store based on the actions dispatched.
+*/
+
 const initialState = {
     gameState: "create_or_join",
     gameCode: "",

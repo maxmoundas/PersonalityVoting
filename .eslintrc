@@ -1,0 +1,12 @@
+{
+    "extends": [
+        "react-app",
+        "plugin:react/recommended"
+    ],
+    "plugins": [
+        "react"
+    ],
+    "rules": {
+        // Add any custom rules here
+    }
+}

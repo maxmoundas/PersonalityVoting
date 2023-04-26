@@ -1,3 +1,9 @@
+/*
+server/game.js: This file contains the Game and Player classes, which model 
+the game state and player state, respectively. These classes handle game 
+logic such as adding players, starting rounds, and voting.
+*/
+
 class Player {
     constructor(id, name) {
         this.id = id;
