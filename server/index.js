@@ -145,25 +145,25 @@ io.on("connection", (socket) => {
         if (game) {
             game.voteForPlayer(socket.id, votedPlayerId);
 
-            if (game.allPlayersVoted() || game.isTimerEnded()) {
+            if (game.allPlayersVoted()) {
                 clearTimeout(game.timer);
-
-                // Call endRound function to show Round Results screen
                 endRound(game);
-
-                if (!game.isGameOver()) {
-                    const newRoundData = game.startRound();
-                    const players = newRoundData.players.map(player => ({
-                        id: player.id,
-                        name: player.name,
-                        score: player.score
-                    }));
-                    io.to(game.code).emit("startRound", { trait: newRoundData.trait, players, timeLeft: 30 });
-                    roundTimer(game, io, 30);
-                } else {
-                    io.to(game.code).emit("gameEnded", { players: game.players });
-                }
             }
+        }
+    });
+
+    // Start the next round
+    socket.on("startNextRound", () => {
+        const game = getGameByPlayerId(socket.id);
+        if (game && !game.isGameOver()) {
+            const newRoundData = game.startRound();
+            const players = newRoundData.players.map(player => ({
+                id: player.id,
+                name: player.name,
+                score: player.score
+            }));
+            io.to(game.code).emit("startRound", { trait: newRoundData.trait, players, timeLeft: 30 });
+            roundTimer(game, io, 30);
         }
     });
 });
