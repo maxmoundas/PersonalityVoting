@@ -44,6 +44,31 @@ const io = require("socket.io")(server, {
 
 const { games } = require("./utils");
 
+function endRound(game) {
+    if (game) {
+        const results = game.getVotingResults();
+        io.to(game.code).emit("roundEnded", { results });
+    }
+}
+
+function roundTimer(game, io, seconds) {
+    let timeLeft = seconds;
+    io.to(game.code).emit("timerUpdate", { timeLeft });
+
+    const timerInterval = setInterval(() => {
+        timeLeft -= 1;
+        io.to(game.code).emit("timerUpdate", { timeLeft });
+
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            game.setTimerEnded(true);
+            endRound(game, io);
+        }
+    }, 1000);
+
+    game.timerInterval = timerInterval;
+}
+
 io.on("connection", (socket) => {
     console.log("Client connected:", socket.id);
 
@@ -109,7 +134,8 @@ io.on("connection", (socket) => {
                 name: player.name,
                 score: player.score
             }));
-            io.to(game.code).emit("startRound", { trait: game.currentTrait, players });
+            io.to(game.code).emit("startRound", { trait: game.currentTrait, players, timeLeft: 30 });
+            roundTimer(game, io, 30);
         }
     });
 
@@ -119,15 +145,21 @@ io.on("connection", (socket) => {
         if (game) {
             game.voteForPlayer(socket.id, votedPlayerId);
 
-            if (game.allPlayersVoted()) {
+            if (game.allPlayersVoted() || game.isTimerEnded()) {
+                clearTimeout(game.timer);
+
+                // Call endRound function to show Round Results screen
+                endRound(game);
+
                 if (!game.isGameOver()) {
-                    game.startRound(traitGenerator);
-                    const players = game.playersArray().map(player => ({
+                    const newRoundData = game.startRound();
+                    const players = newRoundData.players.map(player => ({
                         id: player.id,
                         name: player.name,
                         score: player.score
                     }));
-                    io.to(game.code).emit("startRound", { trait: game.currentTrait, players });
+                    io.to(game.code).emit("startRound", { trait: newRoundData.trait, players, timeLeft: 30 });
+                    roundTimer(game, io, 30);
                 } else {
                     io.to(game.code).emit("gameEnded", { players: game.players });
                 }

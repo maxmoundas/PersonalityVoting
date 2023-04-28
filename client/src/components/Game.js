@@ -16,9 +16,10 @@ class Game {
     constructor(hostId, code) {
         this.hostId = hostId;
         this.code = code;
-        this.players = [];
+        this.players = {};
         this.currentRound = 0;
         this.currentTrait = "";
+        this.timerEnded = false;
     }
 
     playersArray() {
@@ -30,13 +31,15 @@ class Game {
     }
 
     removePlayer(playerId) {
-        this.players = this.players.filter(player => player.id !== playerId);
+        delete this.players[playerId];
     }
 
     startRound() {
         this.currentRound += 1;
         this.currentTrait = traitGenerator();
         this.resetPlayerVotes();
+        this.timerEnded = false;
+        this.clearTimer();
         return { trait: this.currentTrait, players: Object.values(this.players) };
     }
 
@@ -59,7 +62,32 @@ class Game {
             (sum, player) => sum + player.votes,
             0
         );
-        return totalVotes >= Object.keys(this.players).length * this.currentRound;
+        return totalVotes >= Object.keys(this.players).length;
+    }
+
+    getVotingResults() {
+        return Object.values(this.players)
+            .map(player => ({
+                id: player.id,
+                name: player.name,
+                votes: player.votes
+            }))
+            .sort((a, b) => b.votes - a.votes);
+    }
+
+    isTimerEnded() {
+        return this.timerEnded;
+    }
+
+    setTimerEnded(value) {
+        this.timerEnded = value;
+    }
+
+    clearTimer() {
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
     }
 
     isGameOver() {

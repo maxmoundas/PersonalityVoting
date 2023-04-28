@@ -13,6 +13,8 @@ function App() {
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [currentTrait, setCurrentTrait] = useState("");
   const [players, setPlayers] = useState([]);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [votingResults, setVotingResults] = useState([]);
 
   useEffect(() => {
     socket.on("connect", () => {
@@ -36,15 +38,44 @@ function App() {
       setGameCode(gameCode);
     });
 
-    socket.on("startRound", ({ trait, players }) => {
+    socket.on("startRound", ({ trait, players, timeLeft }) => {
       setCurrentTrait(trait);
       setPlayers(players);
+      setTimeLeft(timeLeft);
       setPage("gameRound");
     });
 
     return () => {
       socket.off("gameCreated");
       socket.off("startRound");
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    let timerInterval;
+
+    socket.on("timerUpdate", ({ timeLeft }) => {
+      setTimeLeft(timeLeft);
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        setTimeLeft((prevTimeLeft) => prevTimeLeft - 1);
+      }, 1000);
+    });
+
+    return () => {
+      socket.off("timerUpdate");
+      clearInterval(timerInterval);
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    socket.on("roundEnded", ({ results }) => {
+      setVotingResults(results);
+      setPage("results");
+    });
+
+    return () => {
+      socket.off("roundEnded");
     };
   }, []);
 
@@ -79,7 +110,7 @@ function App() {
   };
 
   const handleVote = (votedPlayerId) => {
-    // TODO: Implement voting logic
+    socket.emit("submitVote", { votedPlayerId });
   };
 
   return (
@@ -105,7 +136,29 @@ function App() {
       )}
       {page === "join" && <JoinGame socket={socket} onBack={handleBack} onGameJoined={handleGameJoined} />}
       {page === "waiting" && <Waiting />}
-      {page === "gameRound" && <GameRound trait={currentTrait} players={players} onVote={handleVote} />}
+      {page === "gameRound" && (
+        <GameRound trait={currentTrait} players={players} onVote={handleVote} timeLeft={timeLeft} />
+      )}
+      {page === "game" && (
+        <div>
+          <h1>Game in progress</h1>
+          <p>Time left: {timeLeft} seconds</p>
+          {/* ... (rest of the game content) */}
+        </div>
+      )}
+      {page === "results" && (
+        <div>
+          <h1>Round Results</h1>
+          <h2>Top Players:</h2>
+          <ul>
+            {votingResults.map((player, index) => (
+              <li key={player.id}>
+                {index + 1}. {player.name} - {player.votes} votes
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
