@@ -1,9 +1,9 @@
 import React from "react";
 
-function GameRound({ trait, players, onVote, timeLeft }) {
+function GameRound({ trait, players, onVote, timeLeft, roundNumber }) {
     return (
         <div>
-            <h1>Game Round</h1>
+            <h1>Round {roundNumber}</h1>
             <p>Time left: {timeLeft} seconds</p>
             <h2>Trait: {trait}</h2>
             <h3>Vote for a player who best fits this trait:</h3>

@@ -21,6 +21,8 @@ function App() {
   const [isFinalRound, setIsFinalRound] = useState(false);
   const [finalResults, setFinalResults] = useState([]);
   const [resultsTimeLeft, setResultsTimeLeft] = useState(15);
+  const [currentRound, setCurrentRound] = useState(1);
+  const [resultsCountdown, setResultsCountdown] = useState(0);
 
   useEffect(() => {
     socket.on("connect", () => {
@@ -43,12 +45,19 @@ function App() {
       console.log("[client] Received game code:", gameCode);
       setGameCode(gameCode);
       setIsHost(true);
+      setCurrentRound(1);
     });
 
     socket.on("startRound", ({ trait, players, timeLeft }) => {
       setCurrentTrait(trait);
       setPlayers(players);
       setTimeLeft(timeLeft);
+      setCurrentRound((prevRound) => {
+        if (prevRound === 5) {
+          setIsFinalRound(true);
+        }
+        return prevRound + 1;
+      });
       setPage("gameRound");
     });
 
@@ -78,7 +87,14 @@ function App() {
   useEffect(() => {
     socket.on("roundEnded", ({ results }) => {
       setVotingResults(results);
-      setPage("results");
+
+      if (currentRound === 5) {
+        setIsFinalRound(true);
+        setPage("finalResults");
+        setFinalResults(players);
+      } else {
+        setPage("results");
+      }
 
       // Reset results timer to 15 seconds
       setResultsTimeLeft(15);
@@ -94,9 +110,19 @@ function App() {
         });
       }, 1000);
 
-      // Clean up the timer when the component is unmounted or the round ends
+      setResultsCountdown(15);
+      const resultsTimer = setInterval(() => {
+        setResultsCountdown((prevTimeLeft) => {
+          if (prevTimeLeft === 1) {
+            clearInterval(resultsTimer);
+            startNextRound();
+          }
+          return prevTimeLeft - 1;
+        });
+      }, 1000);
+
       return () => {
-        clearInterval(timer);
+        clearInterval(resultsTimer);
       };
     });
 
@@ -188,7 +214,13 @@ function App() {
       {page === "join" && <JoinGame socket={socket} onBack={handleBack} onGameJoined={handleGameJoined} />}
       {page === "waiting" && <Waiting />}
       {page === "gameRound" && (
-        <GameRound trait={currentTrait} players={players} onVote={handleVote} timeLeft={timeLeft} />
+        <GameRound
+          trait={currentTrait}
+          players={players}
+          onVote={handleVote}
+          timeLeft={timeLeft}
+          roundNumber={currentRound}
+        />
       )}
       {page === "game" && (
         <div>
@@ -199,8 +231,8 @@ function App() {
       )}
       {page === "results" && (
         <div>
-          <h1>Round Results</h1>
-          <h2>Time left: {resultsTimeLeft} seconds</h2>
+          <h1>Round {currentRound} Results</h1>
+          <h2>Time left: {resultsCountdown} seconds</h2>
           <h2>Player with most votes:</h2>
           {votingResults[0] && (
             <p>
