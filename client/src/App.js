@@ -5,6 +5,7 @@ import socket from "./socket";
 import Waiting from "./components/Waiting";
 import Game from "./components/Game";
 import GameRound from "./components/GameRound";
+import FinalResults from "./components/FinalResults";
 
 function App() {
   const [page, setPage] = useState("welcome");
@@ -17,6 +18,9 @@ function App() {
   const [votingResults, setVotingResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
   const [isHost, setIsHost] = useState(false);
+  const [isFinalRound, setIsFinalRound] = useState(false);
+  const [finalResults, setFinalResults] = useState([]);
+  const [resultsTimeLeft, setResultsTimeLeft] = useState(15);
 
   useEffect(() => {
     socket.on("connect", () => {
@@ -75,6 +79,25 @@ function App() {
     socket.on("roundEnded", ({ results }) => {
       setVotingResults(results);
       setPage("results");
+
+      // Reset results timer to 15 seconds
+      setResultsTimeLeft(15);
+
+      // Start a 15-second timer to automatically proceed to the next round
+      const timer = setInterval(() => {
+        setResultsTimeLeft((prevTimeLeft) => {
+          if (prevTimeLeft === 1) {
+            clearInterval(timer);
+            startNextRound();
+          }
+          return prevTimeLeft - 1;
+        });
+      }, 1000);
+
+      // Clean up the timer when the component is unmounted or the round ends
+      return () => {
+        clearInterval(timer);
+      };
     });
 
     return () => {
@@ -119,6 +142,16 @@ function App() {
   const handleStartNextRound = () => {
     socket.emit("startNextRound");
     setShowResults(false);
+  };
+
+  const startNextRound = () => {
+    setPage("waiting");
+    socket.emit("startNextRound");
+  };
+
+  const handleFinalResults = () => {
+    setPage("finalResults");
+    setFinalResults(players);
   };
 
   useEffect(() => {
@@ -167,6 +200,13 @@ function App() {
       {page === "results" && (
         <div>
           <h1>Round Results</h1>
+          <h2>Time left: {resultsTimeLeft} seconds</h2>
+          <h2>Player with most votes:</h2>
+          {votingResults[0] && (
+            <p>
+              {votingResults[0].name} - {votingResults[0].votes} votes
+            </p>
+          )}
           <h2>Top Players:</h2>
           <ul>
             {votingResults.map((player, index) => (
@@ -175,8 +215,15 @@ function App() {
               </li>
             ))}
           </ul>
-          {isHost && <button onClick={handleStartNextRound}>Start Next Round</button>}
+          {isHost && (
+            isFinalRound
+              ? <button onClick={handleFinalResults}>Final Results</button>
+              : <button onClick={handleStartNextRound}>Start Next Round</button>
+          )}
         </div>
+      )}
+      {page === "finalResults" && (
+        <FinalResults players={finalResults} />
       )}
     </div>
   );

@@ -155,15 +155,23 @@ io.on("connection", (socket) => {
     // Start the next round
     socket.on("startNextRound", () => {
         const game = getGameByPlayerId(socket.id);
-        if (game && !game.isGameOver()) {
-            const newRoundData = game.startRound();
-            const players = newRoundData.players.map(player => ({
-                id: player.id,
-                name: player.name,
-                score: player.score
-            }));
-            io.to(game.code).emit("startRound", { trait: newRoundData.trait, players, timeLeft: 30 });
-            roundTimer(game, io, 30);
+        if (game) {
+            if (!game.isGameOver()) {
+                const newRoundData = game.startRound();
+                const players = newRoundData.players.map((player) => ({
+                    id: player.id,
+                    name: player.name,
+                    score: player.score,
+                }));
+                io.to(game.code).emit("startRound", {
+                    trait: newRoundData.trait,
+                    players,
+                    timeLeft: 30,
+                });
+                roundTimer(game, io, 30);
+            } else {
+                io.to(game.code).emit("gameEnded", { players: game.players });
+            }
         }
     });
 });
