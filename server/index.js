@@ -46,6 +46,7 @@ const { games } = require("./utils");
 
 function endRound(game) {
     if (game) {
+        clearInterval(game.timerInterval);
         const results = game.getVotingResults();
         io.to(game.code).emit("roundEnded", { results });
     }
@@ -54,6 +55,11 @@ function endRound(game) {
 function roundTimer(game, io, seconds) {
     let timeLeft = seconds;
     io.to(game.code).emit("timerUpdate", { timeLeft });
+
+    // Clear the previous interval if it exists
+    if (game.timerInterval) {
+        clearInterval(game.timerInterval);
+    }
 
     const timerInterval = setInterval(() => {
         timeLeft -= 1;
@@ -111,11 +117,19 @@ io.on("connection", (socket) => {
         const game = games[gameCode];
 
         if (game) {
-            game.addPlayer(socket.id, playerName);
-            socket.join(gameCode);
+            // Check if the player's chosen name already exists among the current players
+            const playerNameExists = game.playersArray().some((player) => player.name === playerName);
 
-            io.to(socket.id).emit("gameJoined", { gameCode });
-            io.to(game.hostId).emit("playerJoined", { playerId: socket.id, playerName });
+            // If the name exists, emit an error event to the joining player's socket
+            if (playerNameExists) {
+                socket.emit("error", { message: "This name is already taken. Please choose a different name." });
+            } else {
+                game.addPlayer(socket.id, playerName);
+                socket.join(gameCode);
+
+                io.to(socket.id).emit("gameJoined", { gameCode });
+                io.to(game.hostId).emit("playerJoined", { playerId: socket.id, playerName });
+            }
         } else {
             io.to(socket.id).emit("error", { message: "Game not found" });
         }
@@ -134,7 +148,12 @@ io.on("connection", (socket) => {
                 name: player.name,
                 score: player.score
             }));
-            io.to(game.code).emit("startRound", { trait: game.currentTrait, players, timeLeft: 30 });
+            io.to(game.code).emit("startRound", {
+                trait: game.currentTrait,
+                players,
+                timeLeft: 30,
+                round: game.currentRound,
+            });
             roundTimer(game, io, 30);
         }
     });
@@ -167,6 +186,7 @@ io.on("connection", (socket) => {
                     trait: newRoundData.trait,
                     players,
                     timeLeft: 30,
+                    round: game.currentRound,
                 });
                 roundTimer(game, io, 30);
             } else {

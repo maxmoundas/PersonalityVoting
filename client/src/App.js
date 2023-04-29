@@ -48,16 +48,22 @@ function App() {
       setCurrentRound(1);
     });
 
-    socket.on("startRound", ({ trait, players, timeLeft }) => {
+    socket.on("startRound", ({ trait, players, timeLeft, round }) => {
       setCurrentTrait(trait);
       setPlayers(players);
       setTimeLeft(timeLeft);
-      setCurrentRound((prevRound) => {
-        if (prevRound === 5) {
-          setIsFinalRound(true);
-        }
-        return prevRound + 1;
-      });
+
+      if (isHost && page === "waiting") {
+        setCurrentRound((prevRound) => {
+          if (prevRound === 5) {
+            setIsFinalRound(true);
+          }
+          return prevRound + 1;
+        });
+      } else {
+        setCurrentRound(round);
+      }
+
       setPage("gameRound");
     });
 
@@ -65,27 +71,12 @@ function App() {
       socket.off("gameCreated");
       socket.off("startRound");
     };
-  }, [socket]);
+  }, [socket, page]);
 
   useEffect(() => {
     let timerInterval;
 
-    socket.on("timerUpdate", ({ timeLeft }) => {
-      setTimeLeft(timeLeft);
-      clearInterval(timerInterval);
-      timerInterval = setInterval(() => {
-        setTimeLeft((prevTimeLeft) => prevTimeLeft - 1);
-      }, 1000);
-    });
-
-    return () => {
-      socket.off("timerUpdate");
-      clearInterval(timerInterval);
-    };
-  }, [socket]);
-
-  useEffect(() => {
-    socket.on("roundEnded", ({ results }) => {
+    const roundEndedHandler = ({ results }) => {
       setVotingResults(results);
 
       if (currentRound === 5) {
@@ -96,40 +87,38 @@ function App() {
         setPage("results");
       }
 
-      // Reset results timer to 15 seconds
-      setResultsTimeLeft(15);
+      clearInterval(timerInterval);
 
       // Start a 15-second timer to automatically proceed to the next round
-      const timer = setInterval(() => {
-        setResultsTimeLeft((prevTimeLeft) => {
-          if (prevTimeLeft === 1) {
-            clearInterval(timer);
-            startNextRound();
-          }
-          return prevTimeLeft - 1;
-        });
-      }, 1000);
-
       setResultsCountdown(15);
-      const resultsTimer = setInterval(() => {
+      timerInterval = setInterval(() => {
         setResultsCountdown((prevTimeLeft) => {
           if (prevTimeLeft === 1) {
-            clearInterval(resultsTimer);
+            clearInterval(timerInterval);
             startNextRound();
           }
           return prevTimeLeft - 1;
         });
       }, 1000);
+    };
 
-      return () => {
-        clearInterval(resultsTimer);
-      };
-    });
+    const timerUpdateHandler = ({ timeLeft }) => {
+      setTimeLeft(timeLeft);
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        setTimeLeft((prevTimeLeft) => prevTimeLeft - 1);
+      }, 1000);
+    };
+
+    socket.on("roundEnded", roundEndedHandler);
+    socket.on("timerUpdate", timerUpdateHandler);
 
     return () => {
-      socket.off("roundEnded");
+      socket.off("roundEnded", roundEndedHandler);
+      socket.off("timerUpdate", timerUpdateHandler);
+      clearInterval(timerInterval);
     };
-  }, []);
+  }, [currentRound]);
 
   const handleJoinGame = () => {
     setPage("join");
@@ -183,10 +172,24 @@ function App() {
   useEffect(() => {
     socket.on("startNextRound", () => {
       setShowResults(false);
+      if (isFinalRound) {
+        socket.emit("finalResults");
+      }
     });
 
     return () => {
       socket.off("startNextRound");
+    };
+  }, [isFinalRound]);
+
+  useEffect(() => {
+    socket.on("finalResults", () => {
+      setPage("finalResults");
+      setFinalResults(players);
+    });
+
+    return () => {
+      socket.off("finalResults");
     };
   }, []);
 
@@ -247,11 +250,7 @@ function App() {
               </li>
             ))}
           </ul>
-          {isHost && (
-            isFinalRound
-              ? <button onClick={handleFinalResults}>Final Results</button>
-              : <button onClick={handleStartNextRound}>Start Next Round</button>
-          )}
+          {isHost && <button onClick={handleStartNextRound}>Start Next Round</button>}
         </div>
       )}
       {page === "finalResults" && (
