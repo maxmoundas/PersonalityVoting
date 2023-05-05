@@ -81,12 +81,9 @@ function App() {
 
       if (currentRound === 5) {
         setIsFinalRound(true);
-        setPage("finalResults");
-        setFinalResults(players);
-      } else {
-        setPage("results");
       }
 
+      setPage("results");
       clearInterval(timerInterval);
 
       // Start a 15-second timer to automatically proceed to the next round
@@ -95,7 +92,11 @@ function App() {
         setResultsCountdown((prevTimeLeft) => {
           if (prevTimeLeft === 1) {
             clearInterval(timerInterval);
-            startNextRound();
+            if (isFinalRound) {
+              handleFinalResults();
+            } else {
+              startNextRound();
+            }
           }
           return prevTimeLeft - 1;
         });
@@ -250,7 +251,12 @@ function App() {
               </li>
             ))}
           </ul>
-          {isHost && <button onClick={handleStartNextRound}>Start Next Round</button>}
+          {isHost && (
+            <button
+              onClick={isFinalRound ? handleFinalResults : handleStartNextRound}>
+              {isFinalRound ? "Go to Final Results" : "Start Next Round"}
+            </button>
+          )}
         </div>
       )}
       {page === "finalResults" && (
