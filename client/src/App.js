@@ -1,3 +1,18 @@
+import React from 'react';
+import { SocketProvider } from './context/SocketProvider';
+import MainPage from './pages/MainPage';
+
+function App() {
+  return (
+    <SocketProvider>
+      <MainPage />
+    </SocketProvider>
+  );
+}
+
+export default App;
+
+/*
 import React, { useState, useEffect } from "react";
 import HostGame from "./components/HostGame";
 import JoinGame from "./components/JoinGame";
@@ -230,7 +245,6 @@ function App() {
         <div>
           <h1>Game in progress</h1>
           <p>Time left: {timeLeft} seconds</p>
-          {/* ... (rest of the game content) */}
         </div>
       )}
       {page === "results" && (
@@ -267,3 +281,4 @@ function App() {
 }
 
 export default App;
+*/
