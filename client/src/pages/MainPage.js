@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import HostGame from "../components/HostGame";
 import JoinGame from "../components/JoinGame";
 import Waiting from "../components/Waiting";
@@ -21,6 +21,7 @@ function MainPage() {
     const [resultsTimeLeft, setResultsTimeLeft] = useState(15);
     const [currentRound, setCurrentRound] = useState(1);
     const [resultsCountdown, setResultsCountdown] = useState(0);
+    const timerInterval = useRef(null);
     
     // Call useSocket at the top level of your component to get the socket instance
     const socket = useSocket("createGame", (data) => {
@@ -74,10 +75,14 @@ function MainPage() {
 
         // Start a 15-second timer to automatically proceed to the next round
         setResultsCountdown(15);
-        const timerInterval = setInterval(() => {
+        if (timerInterval.current) { // <-- Clear existing interval if it exists
+            clearInterval(timerInterval.current);
+        }
+        timerInterval.current = setInterval(() => { // <-- Assign interval to timerInterval ref
             setResultsCountdown((prevTimeLeft) => {
                 if (prevTimeLeft === 1) {
-                    clearInterval(timerInterval);
+                    clearInterval(timerInterval.current);
+                    timerInterval.current = null;
                     if (isFinalRound) {
                         handleFinalResults();
                     } else {
@@ -88,6 +93,15 @@ function MainPage() {
             });
         }, 1000);
     });
+
+    useEffect(() => {
+        return () => {
+            if (timerInterval.current) {
+                clearInterval(timerInterval.current);
+                timerInterval.current = null;
+            }
+        };
+    }, []);
 
     useSocket("timerUpdate", ({ timeLeft }) => {
         setTimeLeft(timeLeft);
@@ -100,7 +114,12 @@ function MainPage() {
         }
     });
 
-    useSocket("finalResults", () => {
+    useSocket("finalResults", ({ players }) => {
+        setPage("finalResults");
+        setFinalResults(players);
+    });
+
+    useSocket("navigateToFinalResults", () => {
         setPage("finalResults");
         setFinalResults(players);
     });
@@ -110,6 +129,7 @@ function MainPage() {
     };
 
     const handleBack = () => {
+        setIsHost(false);
         setPage("welcome");
     };
 
@@ -152,6 +172,7 @@ function MainPage() {
     const handleFinalResults = () => {
         setPage("finalResults");
         setFinalResults(players);
+        socket.emit("showFinalResults");
     };
 
     return (

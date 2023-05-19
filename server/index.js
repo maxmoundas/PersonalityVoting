@@ -190,8 +190,20 @@ io.on("connection", (socket) => {
                 });
                 roundTimer(game, io, 30);
             } else {
-                io.to(game.code).emit("gameEnded", { players: game.players });
+                let playerList = Object.values(game.players);
+                io.to(game.code).emit("gameEnded", { players: playerList });
             }
+        }
+    });
+
+    socket.on("showFinalResults", () => {
+        socket.broadcast.emit("navigateToFinalResults");
+    });
+
+    socket.on("endGame", () => {
+        const game = getGameByPlayerId(socket.id);
+        if (game) {
+            io.to(game.code).emit('finalResults', { players: game.players });
         }
     });
 });

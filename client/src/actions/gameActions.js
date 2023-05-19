@@ -1,9 +1,3 @@
-/*
-client/src/actions/gameActions.js: This file contains Redux action creators 
-for creating a game, joining a game, and setting the game state. The actions 
-created here should be dispatched by the Redux store to update the application state.
-*/
-
 export const createGame = (playerName) => ({
     type: "CREATE_GAME",
     payload: { playerName },
