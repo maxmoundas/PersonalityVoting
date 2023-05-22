@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from 'prop-types';
 
 function GameRound({ trait, players, onVote, timeLeft, roundNumber }) {
     return (
@@ -18,5 +19,18 @@ function GameRound({ trait, players, onVote, timeLeft, roundNumber }) {
         </div>
     );
 }
+
+GameRound.propTypes = {
+    trait: PropTypes.string.isRequired,
+    players: PropTypes.arrayOf(
+        PropTypes.shape({
+            id: PropTypes.string.isRequired,
+            name: PropTypes.string.isRequired
+        })
+    ).isRequired,
+    onVote: PropTypes.func.isRequired,
+    timeLeft: PropTypes.number.isRequired,
+    roundNumber: PropTypes.number.isRequired
+};
 
 export default GameRound;

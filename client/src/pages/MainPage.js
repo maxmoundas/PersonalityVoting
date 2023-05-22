@@ -3,6 +3,7 @@ import HostGame from "../components/HostGame";
 import JoinGame from "../components/JoinGame";
 import Waiting from "../components/Waiting";
 import GameRound from "../components/GameRound";
+import RoundResults from "../components/RoundResults";
 import FinalResults from "../components/FinalResults";
 import { useSocket } from "../hooks/useSocket";
 
@@ -188,7 +189,7 @@ function MainPage() {
                     <button onClick={handleJoinGame}>Join Game</button>
                 </>
             )}
-            {page === "host" && (
+            {page === "host" && gameCode && (
                 <HostGame
                     gameCode={gameCode}
                     onBack={handleBack}
@@ -215,30 +216,15 @@ function MainPage() {
                 </div>
             )}
             {page === "results" && (
-                <div>
-                    <h1>Round {currentRound} Results</h1>
-                    <h2>Time left: {resultsCountdown} seconds</h2>
-                    <h2>Player with most votes:</h2>
-                    {votingResults[0] && (
-                        <p>
-                            {votingResults[0].name} - {votingResults[0].votes} votes
-                        </p>
-                    )}
-                    <h2>Top Players:</h2>
-                    <ul>
-                        {votingResults.map((player, index) => (
-                            <li key={player.id}>
-                                {index + 1}. {player.name} - {player.votes} votes
-                            </li>
-                        ))}
-                    </ul>
-                    {isHost && (
-                        <button
-                            onClick={isFinalRound ? handleFinalResults : handleStartNextRound}>
-                            {isFinalRound ? "Go to Final Results" : "Start Next Round"}
-                        </button>
-                    )}
-                </div>
+                <RoundResults
+                    currentRound={currentRound}
+                    resultsCountdown={resultsCountdown}
+                    votingResults={votingResults}
+                    isHost={isHost}
+                    isFinalRound={isFinalRound}
+                    handleFinalResults={handleFinalResults}
+                    handleStartNextRound={handleStartNextRound}
+                />
             )}
             {page === "finalResults" && (
                 <FinalResults players={finalResults} />

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 
 const JoinGame = ({ socket, onBack, onGameJoined }) => {
     const [gameCode, setGameCode] = useState("");
@@ -50,6 +51,12 @@ const JoinGame = ({ socket, onBack, onGameJoined }) => {
             <button onClick={onBack}>Back</button>
         </div>
     );
+};
+
+JoinGame.propTypes = {
+    socket: PropTypes.object.isRequired,
+    onBack: PropTypes.func.isRequired,
+    onGameJoined: PropTypes.func.isRequired
 };
 
 export default JoinGame;

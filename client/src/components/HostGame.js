@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import PropTypes from 'prop-types';
 
 const HostGame = ({ gameCode, onBack, socket, onStartGame }) => {
     const [players, setPlayers] = useState([]);
@@ -35,6 +36,13 @@ const HostGame = ({ gameCode, onBack, socket, onStartGame }) => {
             <button onClick={handleStartGame}>Start Game</button>
         </div>
     );
+};
+
+HostGame.propTypes = {
+    gameCode: PropTypes.string.isRequired,
+    onBack: PropTypes.func.isRequired,
+    socket: PropTypes.object.isRequired,
+    onStartGame: PropTypes.func.isRequired
 };
 
 export default HostGame;

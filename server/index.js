@@ -1,6 +1,6 @@
 const http = require("http");
 const socketIo = require("socket.io");
-const { Game, Player } = require("../client/src/components/Game");
+const { Game, Player } = require("./game");
 const { generateGameCode, getGameByPlayerId, traitGenerator } = require("./utils");
 
 const express = require("express");
