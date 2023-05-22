@@ -5,6 +5,7 @@ import Waiting from "../components/Waiting";
 import GameRound from "../components/GameRound";
 import RoundResults from "../components/RoundResults";
 import FinalResults from "../components/FinalResults";
+import Welcome from "../components/Welcome";
 import { useSocket } from "../hooks/useSocket";
 
 function MainPage() {
@@ -179,15 +180,12 @@ function MainPage() {
     return (
         <div className="App">
             {page === "welcome" && (
-                <>
-                    <h1>Welcome to Personality Voting</h1>
-                    <label>
-                        Enter your name:
-                        <input type="text" value={playerName} onChange={handlePlayerNameChange} />
-                    </label>
-                    <button onClick={handleHostGame}>Host Game</button>
-                    <button onClick={handleJoinGame}>Join Game</button>
-                </>
+                <Welcome
+                    playerName={playerName}
+                    handlePlayerNameChange={handlePlayerNameChange}
+                    handleHostGame={handleHostGame}
+                    handleJoinGame={handleJoinGame}
+                />
             )}
             {page === "host" && gameCode && (
                 <HostGame
@@ -207,13 +205,6 @@ function MainPage() {
                     timeLeft={timeLeft}
                     roundNumber={currentRound}
                 />
-            )}
-            {page === "game" && (
-                <div>
-                    <h1>Game in progress</h1>
-                    <p>Time left: {timeLeft} seconds</p>
-                    {/* ... (rest of the game content) */}
-                </div>
             )}
             {page === "results" && (
                 <RoundResults
