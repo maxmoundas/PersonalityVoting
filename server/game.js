@@ -13,9 +13,10 @@ function traitGenerator() {
 }
 
 class Game {
-    constructor(hostId, code) {
+    constructor(hostId, code, numRounds = 5) {
         this.hostId = hostId;
         this.code = code;
+        this.numRounds = numRounds;
         this.players = {};
         this.currentRound = 0;
         this.currentTrait = "";
@@ -91,7 +92,7 @@ class Game {
     }
 
     isGameOver() {
-        return this.currentRound >= 5;
+        return this.currentRound >= this.numRounds;
     }
 }
 

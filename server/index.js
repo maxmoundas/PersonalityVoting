@@ -139,9 +139,11 @@ io.on("connection", (socket) => {
     });
 
     // Start the game
-    socket.on("startGame", () => {
+    socket.on("startGame", (data) => {
+        console.log('startGame event received:', data);
         const game = getGameByPlayerId(socket.id);
         if (game) {
+            game.numRounds = data.numRounds || game.numRounds;
             game.startRound(traitGenerator);
             const players = game.playersArray().map(player => ({
                 id: player.id,
@@ -154,6 +156,7 @@ io.on("connection", (socket) => {
                 timeLeft: 30,
                 round: game.currentRound,
             });
+            io.to(game.code).emit("gameUpdated", { numRounds: game.numRounds });  // NEW
             roundTimer(game, io, 30);
         }
     });

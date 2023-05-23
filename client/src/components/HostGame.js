@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 
 const HostGame = ({ gameCode, onBack, socket, onStartGame }) => {
     const [players, setPlayers] = useState([]);
+    const [totalRounds, setTotalRounds] = useState(5);  // NEW
 
     useEffect(() => {
         const handlePlayerJoined = ({ playerId, playerName }) => {
@@ -17,7 +18,11 @@ const HostGame = ({ gameCode, onBack, socket, onStartGame }) => {
     }, [socket]);
 
     const handleStartGame = () => {
-        onStartGame(gameCode);
+        onStartGame(gameCode, totalRounds);
+    };
+
+    const handleTotalRoundsChange = (event) => {
+        setTotalRounds(event.target.value);
     };
 
     return (
@@ -33,6 +38,10 @@ const HostGame = ({ gameCode, onBack, socket, onStartGame }) => {
                     ))}
                 </ul>
             </div>
+            <label>
+                Total Rounds:
+                <input type="number" value={totalRounds} onChange={handleTotalRoundsChange} min="1" />
+            </label>
             <button onClick={handleStartGame}>Start Game</button>
         </div>
     );

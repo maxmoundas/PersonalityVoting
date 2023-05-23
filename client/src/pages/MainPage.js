@@ -23,6 +23,7 @@ function MainPage() {
     const [resultsTimeLeft, setResultsTimeLeft] = useState(15);
     const [currentRound, setCurrentRound] = useState(1);
     const [resultsCountdown, setResultsCountdown] = useState(0);
+    const [totalRounds, setTotalRounds] = useState(5);
     const timerInterval = useRef(null);
     
     // Call useSocket at the top level of your component to get the socket instance
@@ -45,22 +46,17 @@ function MainPage() {
         setGameCode(gameCode);
         setIsHost(true);
         setCurrentRound(1);
+        setTotalRounds(5);
     });
 
     useSocket("startRound", ({ trait, players, timeLeft, round }) => {
         setCurrentTrait(trait);
         setPlayers(players);
         setTimeLeft(timeLeft);
+        setCurrentRound(round);
 
-        if (isHost && page === "waiting") {
-            setCurrentRound((prevRound) => {
-                if (prevRound === 5) {
-                    setIsFinalRound(true);
-                }
-                return prevRound + 1;
-            });
-        } else {
-            setCurrentRound(round);
+        if (round === totalRounds) {
+            setIsFinalRound(true);
         }
 
         setPage("gameRound");
@@ -102,8 +98,17 @@ function MainPage() {
                 clearInterval(timerInterval.current);
                 timerInterval.current = null;
             }
+
+            // Emit disconnect event if socket is available
+            if (socket) {
+                socket.emit("disconnect");
+            }
         };
-    }, []);
+    }, [socket]); // <-- Added socket to the dependency array
+
+    useEffect(() => {
+        console.log('totalRounds state updated:', totalRounds);
+    }, [totalRounds]);
 
     useSocket("timerUpdate", ({ timeLeft }) => {
         setTimeLeft(timeLeft);
@@ -111,7 +116,7 @@ function MainPage() {
 
     useSocket("startNextRound", () => {
         setShowResults(false);
-        if (isFinalRound) {
+        if (isFinalRound && currentRound === totalRounds) {
             socket.emit("finalResults");
         }
     });
@@ -133,6 +138,9 @@ function MainPage() {
     const handleBack = () => {
         setIsHost(false);
         setPage("welcome");
+
+        // Emit disconnect event
+        socket.emit("disconnect");
     };
 
     const handleHostGame = () => {
@@ -153,8 +161,11 @@ function MainPage() {
         setPage("waiting");
     };
 
-    const handleStartGame = (gameCode) => {
-        socket.emit("startGame", gameCode);
+    const handleStartGame = (gameCode, totalRounds) => {
+        totalRounds = Number(totalRounds);
+        setTotalRounds(totalRounds); // <-- Set the total rounds
+        console.log('Emitting startGame event:', { gameCode, totalRounds });
+        socket.emit("startGame", { gameCode, totalRounds });
     };
 
     const handleVote = (votedPlayerId) => {
@@ -164,6 +175,9 @@ function MainPage() {
     const handleStartNextRound = () => {
         socket.emit("startNextRound");
         setShowResults(false);
+        if (isFinalRound && currentRound === totalRounds) { // <-- Prevent calling final results if not the final round
+            socket.emit("finalResults");
+        }
     };
 
     const startNextRound = () => {
