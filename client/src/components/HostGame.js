@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from 'prop-types';
 
-const HostGame = ({ gameCode, onBack, socket, onStartGame }) => {
+const HostGame = ({ gameCode, onBack, socket, onStartGame, serverError }) => {
     const [players, setPlayers] = useState([]);
-    const [totalRounds, setTotalRounds] = useState(5);  // NEW
+    const [totalRounds, setTotalRounds] = useState(3);  // Changed default to 3
+    const [error, setError] = useState(null);  // NEW
 
     useEffect(() => {
         const handlePlayerJoined = ({ playerId, playerName }) => {
@@ -18,11 +19,21 @@ const HostGame = ({ gameCode, onBack, socket, onStartGame }) => {
     }, [socket]);
 
     const handleStartGame = () => {
+        if (totalRounds < 3) {
+            setError('Minimum number of rounds is 3.');
+            return;
+        }
         onStartGame(gameCode, totalRounds);
     };
 
     const handleTotalRoundsChange = (event) => {
-        setTotalRounds(event.target.value);
+        const value = event.target.value;
+        if (value < 3) {
+            setError('Minimum number of rounds is 3.');
+        } else {
+            setError(null);
+        }
+        setTotalRounds(value);
     };
 
     return (
@@ -40,8 +51,10 @@ const HostGame = ({ gameCode, onBack, socket, onStartGame }) => {
             </div>
             <label>
                 Total Rounds:
-                <input type="number" value={totalRounds} onChange={handleTotalRoundsChange} min="1" />
+                <input type="number" value={totalRounds} onChange={handleTotalRoundsChange} min="3" />
             </label>
+            {error && <p>{error}</p>}
+            {serverError && <p>Error: {serverError}</p>}
             <button onClick={handleStartGame}>Start Game</button>
         </div>
     );
@@ -51,7 +64,8 @@ HostGame.propTypes = {
     gameCode: PropTypes.string.isRequired,
     onBack: PropTypes.func.isRequired,
     socket: PropTypes.object.isRequired,
-    onStartGame: PropTypes.func.isRequired
+    onStartGame: PropTypes.func.isRequired,
+    serverError: PropTypes.string,
 };
 
 export default HostGame;

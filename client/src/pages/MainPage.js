@@ -24,6 +24,7 @@ function MainPage() {
     const [currentRound, setCurrentRound] = useState(1);
     const [resultsCountdown, setResultsCountdown] = useState(0);
     const [totalRounds, setTotalRounds] = useState(5);
+    const [errorMessage, setErrorMessage] = useState(null);
     const timerInterval = useRef(null);
     
     // Call useSocket at the top level of your component to get the socket instance
@@ -131,6 +132,11 @@ function MainPage() {
         setFinalResults(players);
     });
 
+    useSocket("error", (error) => {
+        console.log("Server error:", error.message);
+        setErrorMessage(error.message);
+    });
+
     const handleJoinGame = () => {
         setPage("join");
     };
@@ -207,6 +213,7 @@ function MainPage() {
                     onBack={handleBack}
                     socket={socket}
                     onStartGame={handleStartGame}
+                    serverError={errorMessage}
                 />
             )}
             {page === "join" && <JoinGame socket={socket} onBack={handleBack} onGameJoined={handleGameJoined} />}

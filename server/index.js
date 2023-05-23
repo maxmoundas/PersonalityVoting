@@ -143,6 +143,12 @@ io.on("connection", (socket) => {
         console.log('startGame event received:', data);
         const game = getGameByPlayerId(socket.id);
         if (game) {
+            // Validate the number of rounds.
+            if (data.numRounds && data.numRounds < 3) {
+                socket.emit('error', { message: 'Minimum number of rounds is 3.' });
+                return;
+            }
+
             game.numRounds = data.numRounds || game.numRounds;
             game.startRound(traitGenerator);
             const players = game.playersArray().map(player => ({
@@ -156,7 +162,7 @@ io.on("connection", (socket) => {
                 timeLeft: 30,
                 round: game.currentRound,
             });
-            io.to(game.code).emit("gameUpdated", { numRounds: game.numRounds });  // NEW
+            io.to(game.code).emit("gameUpdated", { numRounds: game.numRounds });
             roundTimer(game, io, 30);
         }
     });
