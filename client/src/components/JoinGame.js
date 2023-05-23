@@ -14,9 +14,19 @@ const JoinGame = ({ socket, onBack, onGameJoined }) => {
             alert(error.message);
         });
 
+        socket.on("connect_error", (error) => {
+            console.error("Connect error:", error);
+        });
+
+        socket.on("connect_timeout", () => {
+            console.error("Connect timeout");
+        });
+
         return () => {
             socket.off("gameJoined");
             socket.off("error");
+            socket.off("connect_error");
+            socket.off("connect_timeout");
         };
     }, [socket, onGameJoined]);
 

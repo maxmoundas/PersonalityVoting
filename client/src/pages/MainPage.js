@@ -138,6 +138,10 @@ function MainPage() {
     });
 
     const handleJoinGame = () => {
+        // Reconnect the socket if it's not connected
+        if (!socket.connected) {
+            socket.connect();
+        }
         setPage("join");
     };
 
@@ -145,8 +149,8 @@ function MainPage() {
         setIsHost(false);
         setPage("welcome");
 
-        // Emit disconnect event
-        socket.emit("disconnect");
+        // Disconnect from the server
+        socket.disconnect();
     };
 
     const handleHostGame = () => {
